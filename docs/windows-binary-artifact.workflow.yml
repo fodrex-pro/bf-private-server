@@ -1,0 +1,77 @@
+name: Windows binary candidate (not playable)
+on:
+  push:
+    branches: [windows-portable-test]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: windows-portable-test-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compile:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare build tools
+        shell: pwsh
+        run: |
+          python -m pip install "cmake>=4,<5"
+          rustup default stable
+          cmake --version
+          ninja --version
+          cargo --version
+          if (-not (Test-Path "$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake")) { throw "vcpkg missing" }
+          "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" >> $env:GITHUB_ENV
+      - name: Compile native x64 release
+        shell: cmd
+        working-directory: server
+        run: |
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSROOT=%%i"
+          if not defined VSROOT exit /b 1
+          call "%VSROOT%\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64
+          if errorlevel 1 exit /b 1
+          cmake --preset standalone-release-win64
+          if errorlevel 1 exit /b 1
+          cmake --build --preset standalone-release-win64 --parallel 2
+          if errorlevel 1 exit /b 1
+      - name: Verify executable exists
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem server/out/build/standalone-release-win64 -Filter gimuserverw.exe -Recurse | Select-Object -First 1
+          if (-not $exe) { throw "Executable missing" }
+          Get-FileHash $exe.FullName -Algorithm SHA256
+      - name: Stage compiled candidate
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem server/out/build/standalone-release-win64 -Filter gimuserverw.exe -Recurse | Select-Object -First 1
+          if (-not $exe) { throw "Executable missing" }
+          $stage = Join-Path $env:RUNNER_TEMP "bf-binary-candidate"
+          New-Item -ItemType Directory -Path $stage -ErrorAction Stop | Out-Null
+          Copy-Item -LiteralPath $exe.FullName -Destination $stage
+          Get-ChildItem -LiteralPath $exe.DirectoryName -File -Filter "*.dll" | Copy-Item -Destination $stage
+          Copy-Item -LiteralPath LICENSE -Destination $stage
+          if (Test-Path -LiteralPath NOTICE) { Copy-Item -LiteralPath NOTICE -Destination $stage }
+          $deps = "server/out/build/standalone-release-win64/vcpkg_installed/x64-windows/share"
+          if (!(Test-Path -LiteralPath $deps)) { throw "Dependency notice directory missing" }
+          Get-ChildItem -LiteralPath $deps -Directory | ForEach-Object {
+            $notice = Join-Path $_.FullName "copyright"
+            if (Test-Path -LiteralPath $notice) {
+              $dest = Join-Path $stage ("licenses/" + $_.Name)
+              New-Item -ItemType Directory -Path $dest -Force | Out-Null
+              Copy-Item -LiteralPath $notice -Destination (Join-Path $dest "copyright.txt")
+            }
+          }
+          Copy-Item -LiteralPath server/packet-generator/LICENSE -Destination (Join-Path $stage "packet-generator-LICENSE.txt")
+          Copy-Item -LiteralPath server/packaging/date-LICENSE.txt -Destination (Join-Path $stage "date-LICENSE.txt")
+          @("UNVALIDATED BUILD - DO NOT RUN ON PRIMARY DEVICES","Source: https://github.com/${{ github.repository }}/tree/${{ github.sha }}","This is not a playable or complete portable release. Runtime dependencies, content and security are not verified.") | Set-Content -LiteralPath (Join-Path $stage "README.txt")
+          $files = Get-ChildItem -LiteralPath $stage -File -Recurse
+          $files | ForEach-Object { "{0}  {1}" -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash, $_.FullName.Substring($stage.Length + 1) } | Set-Content -LiteralPath (Join-Path $stage "SHA256SUMS.txt")
+      - name: Preserve binary candidate for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: bf-windows-binary-candidate
+          path: ${{ runner.temp }}/bf-binary-candidate
+          retention-days: 3
+          if-no-files-found: error
