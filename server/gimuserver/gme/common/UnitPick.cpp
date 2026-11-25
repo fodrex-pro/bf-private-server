@@ -54,11 +54,21 @@ constexpr int32_t kFirstRaceTile = 9111;
 constexpr int32_t kFirstRaceTileOrder = 38;
 
 /*! deploy/archive/race_pick.json (scripts/gen_race_pick.py). */
+} // namespace
+
+// Glaze reflection requires types with external linkage on MSVC.
+namespace unit_pick_detail
+{
 struct RacePickFile
 {
 	std::string about;
 	std::vector<int32_t> units;
 };
+} // namespace unit_pick_detail
+
+namespace
+{
+using unit_pick_detail::RacePickFile;
 
 struct Band
 {

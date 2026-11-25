@@ -17,11 +17,21 @@
 namespace
 {
 
+} // namespace
+
+// Glaze reflection requires types with external linkage on MSVC.
+namespace news_posts_detail
+{
 struct NewsFile
 {
 	gme::NewsPage page;
 	std::vector<gme::NewsPost> posts;
 };
+} // namespace news_posts_detail
+
+namespace
+{
+using news_posts_detail::NewsFile;
 
 // The parsed file and what it looked like on disk when it was read.
 struct NewsCache

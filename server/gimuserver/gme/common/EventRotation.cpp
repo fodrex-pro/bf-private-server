@@ -19,6 +19,11 @@ namespace
 {
 
 /*! One event of the pool: its token, what pays it, and its Bazaar. */
+} // namespace
+
+// Glaze reflection requires types with external linkage on MSVC.
+namespace event_rotation_detail
+{
 struct RotationEvent
 {
 	std::string name;
@@ -39,6 +44,12 @@ struct EventRotationFile
 	/*! THE ORDER IS THE CALENDAR: changing it reshuffles every future week. */
 	std::vector<RotationEvent> pool;
 };
+} // namespace event_rotation_detail
+
+namespace
+{
+using event_rotation_detail::RotationEvent;
+using event_rotation_detail::EventRotationFile;
 
 EventRotationFile g_rotation;
 int64_t g_firstWeek = 0;
@@ -299,6 +310,11 @@ drogon::Task<bool> payFeaturedEventTokens(db::Database database, UserIdentity id
 namespace
 {
 
+} // namespace
+
+// Glaze reflection requires types with external linkage on MSVC.
+namespace event_schedule_detail
+{
 struct ScheduleEvent
 {
 	std::string name;
@@ -318,6 +334,12 @@ struct EventSchedule
 	int32_t today{};
 	int64_t next_day{};
 };
+} // namespace event_schedule_detail
+
+namespace
+{
+using event_schedule_detail::ScheduleEvent;
+using event_schedule_detail::EventSchedule;
 
 } // namespace
 

@@ -20,6 +20,11 @@ namespace forge
 namespace
 {
 
+} // namespace
+
+// Glaze reflection requires types with external linkage on MSVC.
+namespace tuning_detail
+{
 struct RawTuning
 {
 	std::optional<double> fusion_sp_chance_pct;
@@ -32,6 +37,11 @@ struct RawTuning
 	std::optional<double> boss_drop_pct_r5, boss_drop_pct_r6, boss_drop_pct_r7, boss_drop_pct_r8;
 	std::optional<double> boss_drop_merit_pct;
 };
+} // namespace tuning_detail
+
+namespace
+{
+using tuning_detail::RawTuning;
 
 struct TuningOpts : glz::opts
 {

@@ -33,6 +33,11 @@ bool validReward(const ExchangeOffer& offer)
 * is required (a typo must not become a 0), `source` and the Elgif skill are
 * optional as they are there.
 */
+} // namespace
+
+// Glaze reflection requires types with external linkage on MSVC.
+namespace exchange_detail
+{
 struct ForgeOffer
 {
     std::string id;
@@ -46,6 +51,11 @@ struct ForgeOffer
     std::optional<std::string> source;
     std::optional<int32_t> extra_skill;
 };
+} // namespace exchange_detail
+
+namespace
+{
+using exchange_detail::ForgeOffer;
 
 /*! Why the Forge's offer cannot be sold, or nullopt (the boot check below, per offer, in plain words). */
 std::optional<std::string> forgeOfferProblem(const ExchangeOffer& offer)

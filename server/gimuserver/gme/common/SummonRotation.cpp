@@ -27,6 +27,11 @@ namespace
 {
 
 /*! One gate in the pool.  `art` is its rail tile image, empty for the default. */
+} // namespace
+
+// Glaze reflection requires types with external linkage on MSVC.
+namespace summon_rotation_detail
+{
 struct RotationGate
 {
 	uint32_t gate{};
@@ -50,6 +55,12 @@ struct RotationFile
 	/*! THE ORDER IS THE CALENDAR: changing it reshuffles every future week. */
 	std::vector<RotationGate> pool;
 };
+} // namespace summon_rotation_detail
+
+namespace
+{
+using summon_rotation_detail::RotationGate;
+using summon_rotation_detail::RotationFile;
 
 RotationFile g_rotation;
 int64_t g_firstWeek = 0;
