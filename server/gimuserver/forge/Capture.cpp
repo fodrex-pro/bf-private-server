@@ -17,7 +17,8 @@
 namespace forge
 {
 
-namespace
+// Windows compatibility adjustment, 2026-11-25: give Glaze-reflected types external linkage.
+namespace capture_detail
 {
 
 struct RawRule
@@ -31,6 +32,13 @@ struct RawCapture
 	std::map<std::string, RawRule> units;
 	std::map<std::string, std::map<std::string, RawRule>> missions;
 };
+
+} // namespace capture_detail
+
+namespace
+{
+using capture_detail::RawRule;
+using capture_detail::RawCapture;
 
 struct CaptureOpts : glz::opts
 {
