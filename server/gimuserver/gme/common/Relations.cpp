@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <ctime>
+#include <stdexcept>
 #include <deque>
 #include <map>
 #include <mutex>
@@ -48,7 +49,12 @@ std::string reqTimeString(int64_t at)
 {
 	const auto t = static_cast<std::time_t>(at);
 	std::tm tm{};
-	gmtime_r(&t, &tm);
+#if defined(_WIN32)
+	if (::gmtime_s(&tm, &t) != 0)
+#else
+	if (::gmtime_r(&t, &tm) == nullptr)
+#endif
+		throw std::runtime_error("Invalid UTC timestamp");
 	char buf[32];
 	std::strftime(buf, sizeof buf, "%Y-%m-%d %H:%M:%S", &tm);
 	return buf;

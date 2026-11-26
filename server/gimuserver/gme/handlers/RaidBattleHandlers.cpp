@@ -280,17 +280,17 @@ drogon::Task<void> recordBattleStats(const std::string userId, const RaidRequest
 	const auto value = [&](const char* key) {
 		return std::clamp<int64_t>(RaidRequest::numberOf(req.node("zS9s5bEI"), key), 0, kStatCap);
 	};
-	co_await bumpStat(theDb(), userId, stat::kCrystalB, value("hoG2ieT5"));
-	co_await bumpStat(theDb(), userId, stat::kCrystalH, value("6PLsn8xo"));
-	co_await raiseStat(theDb(), userId, stat::kCrystalBMax, value("hoG2ieT5"));
-	co_await raiseStat(theDb(), userId, stat::kCrystalHMax, value("6PLsn8xo"));
-	co_await raiseStat(theDb(), userId, stat::kBattleTurnMaxDamage, value("5NRJQ1LU"));
-	co_await raiseStat(theDb(), userId, stat::kBattleTurnMaxSpark, value("XP06YWdT"));
-	co_await bumpStat(theDb(), userId, stat::kSparkCnt, value("U8uZLA34"));
-	co_await bumpStat(theDb(), userId, stat::kSkillCnt, value("rZQJF5G9"));
-	co_await bumpStat(theDb(), userId, stat::kBattleDamage, value("kqI45VU1"));
-	co_await bumpStat(theDb(), userId, stat::kEscapeCnt, value("E5S7XgR6"));
-	co_await bumpStat(theDb(), userId, stat::kOverkillCnt, value("Wnc6A31E"));
+	co_await bumpStat(theDb(), userId, gme::raid::stat::kCrystalB, value("hoG2ieT5"));
+	co_await bumpStat(theDb(), userId, gme::raid::stat::kCrystalH, value("6PLsn8xo"));
+	co_await raiseStat(theDb(), userId, gme::raid::stat::kCrystalBMax, value("hoG2ieT5"));
+	co_await raiseStat(theDb(), userId, gme::raid::stat::kCrystalHMax, value("6PLsn8xo"));
+	co_await raiseStat(theDb(), userId, gme::raid::stat::kBattleTurnMaxDamage, value("5NRJQ1LU"));
+	co_await raiseStat(theDb(), userId, gme::raid::stat::kBattleTurnMaxSpark, value("XP06YWdT"));
+	co_await bumpStat(theDb(), userId, gme::raid::stat::kSparkCnt, value("U8uZLA34"));
+	co_await bumpStat(theDb(), userId, gme::raid::stat::kSkillCnt, value("rZQJF5G9"));
+	co_await bumpStat(theDb(), userId, gme::raid::stat::kBattleDamage, value("kqI45VU1"));
+	co_await bumpStat(theDb(), userId, gme::raid::stat::kEscapeCnt, value("E5S7XgR6"));
+	co_await bumpStat(theDb(), userId, gme::raid::stat::kOverkillCnt, value("Wnc6A31E"));
 }
 
 /*!
@@ -310,14 +310,14 @@ drogon::Task<void> recordRunStats(const db::Database tx, const std::string userI
 		co_return;
 	const auto playtime = std::max<int64_t>(0,
 		times[0]["ended_at"].as<int64_t>() - times[0]["started_at"].as<int64_t>());
-	co_await bumpStat(tx, userId, stat::kWin);
-	co_await bumpStat(tx, userId, times[0]["members"].as<int32_t>() > 1 ? stat::kCooperationWin : stat::kSingleWin);
+	co_await bumpStat(tx, userId, gme::raid::stat::kWin);
+	co_await bumpStat(tx, userId, times[0]["members"].as<int32_t>() > 1 ? gme::raid::stat::kCooperationWin : gme::raid::stat::kSingleWin);
 	if (const auto mission = runMission(run); mission)
-		if (const auto* rcWin = stat::rcWin(mission->rc_id); rcWin != nullptr)
+		if (const auto* rcWin = gme::raid::stat::rcWin(mission->rc_id); rcWin != nullptr)
 			co_await bumpStat(tx, userId, rcWin);
-	co_await bumpStat(tx, userId, stat::kPlaytime, playtime);
+	co_await bumpStat(tx, userId, gme::raid::stat::kPlaytime, playtime);
 	if (playtime > 0)
-		co_await lowerStat(tx, userId, stat::kFastestPlaytime, playtime);
+		co_await lowerStat(tx, userId, gme::raid::stat::kFastestPlaytime, playtime);
 }
 
 } // namespace

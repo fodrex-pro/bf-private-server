@@ -58,13 +58,15 @@ if (MSVC)
     target_compile_options(gimuserver PRIVATE "/bigobj")
 endif()
 
-# MSVC 19.51 emits C4737 for these coroutine-heavy handlers under /O2,
+# MSVC 19.51/19.52 emits C4737 for these coroutine-heavy handlers under /O2,
 # even without LTCG. Keep the workaround local; all other Release objects
 # remain optimized. Recheck when upgrading the compiler.
 if (MSVC)
     set_property(SOURCE gme/handlers/Mission.cpp gme/handlers/Present.cpp gme/handlers/UserInfo.cpp
+        gme/handlers/AchievementDeliver.cpp gme/handlers/DungeonKey.cpp gme/handlers/UnitEvo.cpp gme/handlers/UnitMix.cpp
         APPEND PROPERTY COMPILE_OPTIONS "$<$<NOT:$<CONFIG:Debug>>:/Od>")
     # MSVC otherwise restores /O2 from the shared PCH (C4653), ignoring /Od.
     set_source_files_properties(gme/handlers/Mission.cpp gme/handlers/Present.cpp gme/handlers/UserInfo.cpp
+        gme/handlers/AchievementDeliver.cpp gme/handlers/DungeonKey.cpp gme/handlers/UnitEvo.cpp gme/handlers/UnitMix.cpp
         PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 endif()

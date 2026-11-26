@@ -166,7 +166,7 @@ drogon::Task<HandleResult> useItem(const char* name, const std::string json)
 			taken = co_await takeFromSet(transaction, userId, itemId);
 		if (taken)
 		{
-			co_await bumpStat(transaction, userId, stat::kRaidItemUse);
+			co_await bumpStat(transaction, userId, gme::raid::stat::kRaidItemUse);
 			// No co_await inside a condition: GCC 13 ICEs on it (see below).
 			taken = co_await gme::CommitTransaction(std::move(transaction));
 		}
@@ -347,7 +347,7 @@ HANDLEF(RaidMissionStart)
 					"RaidMissionStart: " + userId + " has no aube for room " + roomId);
 			}
 			co_await joinRun(transaction, *run, userId, readPartyRows(call.req), *mission);
-			co_await bumpStat(transaction, userId, stat::kChallenge);
+			co_await bumpStat(transaction, userId, gme::raid::stat::kChallenge);
 		}
 		if (!(co_await gme::CommitTransaction(std::move(transaction))))
 			co_return HandleResult::refuseToRetry("The raid could not be started. Please try again.",
@@ -428,7 +428,7 @@ HANDLEF(RaidMissionHarvest)
 		auto transaction = co_await gme::newTransaction(theDb());
 		const bool stored = co_await addToBag(transaction, *call.run, userId, found->first, found->second);
 		if (stored)
-			co_await bumpStat(transaction, userId, stat::kItemHarvest, found->second);
+			co_await bumpStat(transaction, userId, gme::raid::stat::kItemHarvest, found->second);
 		if (!stored)
 			LOG_INFO << "RaidMissionHarvest: bag of " << userId << " is full";
 		if (!(co_await gme::CommitTransaction(std::move(transaction))))
@@ -483,7 +483,7 @@ HANDLEF(RaidMissionExit)
 				"UPDATE raid_room_member SET mission_status = 0, ready = 0 WHERE room_id = $1 AND user_id = $2;",
 				call.run->roomId, userId);
 			if (exited.affectedRows() > 0)
-				co_await bumpStat(theDb(), userId, stat::kEscapeCnt);
+				co_await bumpStat(theDb(), userId, gme::raid::stat::kEscapeCnt);
 			co_await settleRoomAfterRun(theDb(), call.run->roomId, call.run->id);
 			co_return reply("RaidMissionExit", co_await roomResp(theDb(), userId, call.run->roomId));
 		}

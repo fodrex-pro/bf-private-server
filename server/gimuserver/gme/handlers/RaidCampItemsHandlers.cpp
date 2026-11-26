@@ -222,7 +222,7 @@ HANDLEF(RaidCampRestStart)
 			"RaidCampRestStart: " + userId + " is at point " + std::to_string(point));
 
 	if (co_await startCamp(theDb(), run.id, userId, nowSeconds()))
-		co_await bumpStat(theDb(), userId, stat::kCampRecover);
+		co_await bumpStat(theDb(), userId, gme::raid::stat::kCampRecover);
 	LOG_INFO << "RaidCampRestStart: " << userId << " rests at point " << camp.member->nowPoint << " in run " << run.id;
 	co_return reply("RaidCampRestStart", co_await fieldResp(theDb(), userId, run));
 }
@@ -317,7 +317,7 @@ HANDLEF(RaidItemMix)
 			const auto outcome = mixInBag(*orders, permitted, bag);
 			co_await storeBag(transaction, call.run->id, userId, outcome.bag);
 			if (outcome.crafted > 0)
-				co_await bumpStat(transaction, userId, stat::kItemMixCnt, outcome.crafted);
+				co_await bumpStat(transaction, userId, gme::raid::stat::kItemMixCnt, outcome.crafted);
 			if (!(co_await gme::CommitTransaction(std::move(transaction))))
 				LOG_ERROR << "RaidItemMix: mix of " << userId << " did not commit";
 			LOG_INFO << "RaidItemMix: " << userId << " crafted " << outcome.crafted << " in run " << call.run->id;

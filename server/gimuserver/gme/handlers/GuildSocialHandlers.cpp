@@ -8,6 +8,7 @@
 #include <gimuserver/gme/common/Relations.hpp>
 
 #include <ctime>
+#include <stdexcept>
 
 // Guilds between real players: search, a friend's guild, the Requests screen,
 // accepting and declining, settings and the board.  Wire shapes: net/guild.kdl;
@@ -36,7 +37,12 @@ std::string displayTime(int64_t at)
 {
 	const std::time_t t = static_cast<std::time_t>(at);
 	std::tm tm{};
-	gmtime_r(&t, &tm);
+#if defined(_WIN32)
+	if (::gmtime_s(&tm, &t) != 0)
+#else
+	if (::gmtime_r(&t, &tm) == nullptr)
+#endif
+		throw std::runtime_error("Invalid UTC timestamp");
 	char buf[32];
 	std::strftime(buf, sizeof(buf), "%m/%d %H:%M UTC", &tm);
 	return buf;
