@@ -13,6 +13,7 @@
 #include <ctime>
 #include <limits>
 #include <set>
+#include <stdexcept>
 
 namespace gme::colosseum
 {
@@ -36,7 +37,12 @@ std::tm gameClockNow()
 {
 	const std::time_t t = static_cast<std::time_t>(unixNow() - kGameDayStartSeconds);
 	std::tm tm{};
-	gmtime_r(&t, &tm);
+#if defined(_WIN32)
+	if (::gmtime_s(&tm, &t) != 0)
+#else
+	if (::gmtime_r(&t, &tm) == nullptr)
+#endif
+		throw std::runtime_error("Colosseum: invalid game-clock timestamp");
 	return tm;
 }
 
