@@ -9,6 +9,18 @@ concurrency:
   group: windows-portable-test-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inventory platform-specific date and POSIX calls
+        shell: bash
+        run: |
+          echo "UTC and local clock conversions with surrounding platform guards:"
+          git grep -n -C 5 -E '(gmtime_r|localtime_r|gmtime_s|localtime_s|timegm|strptime)[[:space:]]*\(' -- server/gimuserver server/standalone_frontend server/game_frontend || test "$?" -eq 1
+          echo "Other POSIX-specific headers and functions (review only, not a verdict):"
+          git grep -n -E '(<unistd\.h>|<sys/socket\.h>|<dlfcn\.h>|<pthread\.h>|\b(setenv|unsetenv|readlink|fork|dlopen|popen)[[:space:]]*\()' -- server/gimuserver server/standalone_frontend server/game_frontend || test "$?" -eq 1
   compile:
     runs-on: windows-2025
     timeout-minutes: 45
@@ -34,7 +46,7 @@ jobs:
           if errorlevel 1 exit /b 1
           cmake --preset standalone-release-win64
           if errorlevel 1 exit /b 1
-          cmake --build --preset standalone-release-win64 --parallel 2
+          cmake --build --preset standalone-release-win64 --parallel 2 -- -k 0
           if errorlevel 1 exit /b 1
       - name: Verify executable exists
         shell: pwsh

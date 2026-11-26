@@ -13,6 +13,7 @@
 #include <ctime>
 #include <map>
 #include <set>
+#include <stdexcept>
 #include <tuple>
 #include <sstream>
 #include <unordered_map>
@@ -31,7 +32,12 @@ std::string weekTerm(const int64_t cycle)
 	{
 		const std::time_t t = static_cast<std::time_t>(when);
 		std::tm tm{};
-		gmtime_r(&t, &tm);
+#if defined(_WIN32)
+		if (::gmtime_s(&tm, &t) != 0)
+#else
+		if (::gmtime_r(&t, &tm) == nullptr)
+#endif
+			throw std::runtime_error("FrontierHunter: invalid UTC timestamp");
 		char buffer[16];
 		std::strftime(buffer, sizeof(buffer), "%b %d", &tm);
 		return std::string(buffer);
